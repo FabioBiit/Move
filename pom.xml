@@ -1,0 +1,207 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>MoveIn</groupId>
+    <artifactId>MoveIn</artifactId>
+    <version>1.0.0</version>
+
+    <repositories>
+        <!--repository>
+            <id>my-repo1</id>
+            <name>your custom repo</name>
+            <url>https://mvnrepository.com/artifact/com.hortonworks.hive/hive-warehouse-connector</url>
+        </repository-->
+
+        <repository>
+            <id>my-repo2</id>
+            <name>your custom repo</name>
+            <url>https://repo.hortonworks.com/content/repositories/releases/org/apache/hive/</url>
+        </repository>
+
+    </repositories>
+
+    <properties>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
+        <encoding>UTF-8</encoding>
+
+        <scala.version>2.11.12</scala.version>
+        <scala.compat.version>2.11.12</scala.compat.version>
+        <scala.binary.version>2.11</scala.binary.version>
+    </properties>
+
+    <build>
+        <sourceDirectory>src</sourceDirectory>
+        <plugins>
+            <plugin>
+                <groupId>org.scala-tools</groupId>
+                <artifactId>maven-scala-plugin</artifactId>
+                <version>2.15.2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <configuration>
+                            <args>
+                                <!--arg>-make:transitive</arg-->
+                                <arg>-dependencyfile</arg>
+                                <arg>${project.build.directory}/.scala_dependencies</arg>
+                            </args>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.6</version>
+                <configuration>
+                    <useFile>false</useFile>
+                    <disableXmlReport>true</disableXmlReport>
+                    <!-- If you have classpath issue like NoDefClassError,... -->
+                    <!-- useManifestOnlyJar>false</useManifestOnlyJar -->
+                    <includes>
+                        <include>**/*Test.*</include>
+                        <include>**/*Suite.*</include>
+                    </includes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.4</version>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>MoveIn/src/main/resources/assemblies/assembly.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>make-tar</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>MoveIn/src/main/resources/assemblies/assembly2.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>8</source>
+                    <target>8</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    <dependencies>
+        <!-- https://mvnrepository.com/artifact/org.scala-tools/maven-scala-plugin -->
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_${scala.binary.version}</artifactId>
+            <version>2.3.2</version>
+            <scope>provided</scope>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_2.11</artifactId>
+            <version>2.3.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>2.9.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-hive_2.11</artifactId>
+            <version>2.3.2</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!--dependency>
+            <groupId>com</groupId>
+            <artifactId>mysql</artifactId>
+            <version>1.4</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/buildfiles/mysql-connector-java.jar</systemPath>
+        </dependency-->
+
+        <dependency>
+            <groupId>com.hortonworks.hive</groupId>
+            <artifactId>hive-warehouse-connector_2.11</artifactId>
+            <version>11.0.0.3.1.5.14-1</version>
+
+            <!--scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions-->
+
+            <!--scope>system</scope>
+                <systemPath>${project.basedir}/buildfiles/hive-warehouse-connector_2.11-1.0.0.3.1.5.14-1.jar</systemPath-->
+            <scope>system</scope>
+            <systemPath>${project.basedir}/buildfiles/hive-warehouse-connector_2.11-1.0.0.3.1.5.14-1.jar</systemPath>
+        </dependency>
+
+        <!--dependency>
+            <groupId>oracle</groupId>
+            <artifactId>ojdbc</artifactId>
+            <version>1.4</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/buildfiles/ojdbc-14-1.4.jar</systemPath>
+        </dependency>
+
+        <dependency>
+          <groupId>com.dremio.distribution</groupId>
+          <artifactId>dremio-jdbc-driver</artifactId>
+          <version>3.0.6</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/buildfiles/dremio-jdbc.jar</systemPath>
+        </dependency-->
+
+        <!--dependency>
+        <groupId>com.lucidworks.spark</groupId>
+        <artifactId>spark-solr</artifactId>
+        <version>3.5.14</version>
+        <scope>provided</scope>
+            <systemPath>${project.basedir}/buildfiles/spark-solr-3.5.14-shaded.jar</systemPath>
+        </dependency-->
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>24.0-jre</version>
+        </dependency>
+
+
+    </dependencies>
+
+</project>
