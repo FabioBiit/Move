@@ -1,9 +1,9 @@
 package move
 
-import org.apache.spark.sql.expressions._
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions._
 import org.apache.spark.SparkConf
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.expressions._
+import org.apache.spark.sql.functions._
 
 
 object Main {
@@ -22,8 +22,8 @@ object Main {
 
     val hive = com.hortonworks.hwc.HiveWarehouseSession.session(spark).build()
 
-    import java.time.format.DateTimeFormatter
     import java.time.LocalDateTime
+    import java.time.format.DateTimeFormatter
 
     val data_oggi = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDateTime.now)
 
@@ -33,18 +33,14 @@ object Main {
 
     //PULIZIA DATAFRAME
 
-    import spark.implicits._
-
-    var df_storico = hive.executeQuery(
-      s"""select *
-                                       from $db_multi.movein_piemonte
-
-                                       where tipo_adesione is not null and
-                                       data_adesione is not null and
-                                       data_attivazione is not null and
-                                       data_fine_adesione is not null
-
-                                       """).
+    var df_storico = hive.executeQuery(s"""
+           select *
+           from $db_multi.movein_piemonte
+           where tipo_adesione is not null and
+           data_adesione is not null and
+           data_attivazione is not null and
+           data_fine_adesione is not null
+           """).
       withColumn("data_adesione", to_date($"data_adesione", "dd-MM-yyyy")).
       withColumn("data_attivazione", to_date($"data_attivazione", "dd-MM-yyyy")).
       withColumn("data_fine_adesione", to_date($"data_fine_adesione", "dd-MM-yyyy")).
@@ -70,7 +66,7 @@ object Main {
 
     //******************************************************************************************************END_1*************************************************************************************************************
 
-    //DATA QUALITY SUL DF, EREDITATI DA LAURA
+    //DATA QUALITY SUL DF
 
     val colNames = Array("a1_u_eco", "a1_a_noeco", "a1_u_noeco", "a1_a_eco", "a1_e", "a2_e", "a2_u_eco", "a2_u_noeco", "a2_a_noeco", "a2_a_eco")
 
@@ -119,7 +115,7 @@ object Main {
 
     val km_percorsi_per_targa_1 = spark.read.load("km_percorsi_per_targa_1")
 
-    //STEP PER KM CUMULATI PER TARGA (IMPLEMENTATO CON CARLO)
+    //STEP PER KM CUMULATI PER TARGA
 
     val windowSpec = Window.partitionBy("w1").orderBy("di_datafile", "categoria_veicolo", "alimentazione_veicolo", "classe_ambientale")
 
@@ -141,7 +137,7 @@ object Main {
     val df_storico_02_0 = veicoli_attivi_per_targa_1.
       withColumn("km_tot_cumulati", round(sum($"diff_km_prev_day").over(windowSpec), 2)).orderBy(asc("data_revoca_movein")) //ORDINAMENTO FONDAMENTALE PER UN CORRETTO RISULTATO
 
-    //  APPLICHIAMO QUESTA CONDIZIONE PER EVITARE DEI FALSI POSITIVI SULLE DATA_REVOCA_MOVEIN, IMPLEMENTIAMO UNA LOGICA DI CONTROLLO SUI KM_TOT => SE QUELLI DI OGGI SONO MAGGIORI DI QUELLI DI IERI ALLORA L'UTENTE � UN FALSO POSITIVO (VUL DIRE CHE CI SONO ARRIVATE DELLE DATE REVOCHE ANOMALE DOVUTE A DEGLI ERRORI DELLA SCATOLETTA DEL TSP CHE NON DOBBIAMO CONSIDERARE) POICH� CAMMINA REGOLARMENTE SETTIAMO A NULL QUELLE DATA REVOCA CHE PRESENTANO QUESTA CONDIZIONE
+    //  APPLICHIAMO QUESTA CONDIZIONE PER EVITARE DEI FALSI POSITIVI SULLE DATA_REVOCA_MOVEIN, IMPLEMENTIAMO UNA LOGICA DI CONTROLLO SUI KM_TOT => SE QUELLI DI OGGI SONO MAGGIORI DI QUELLI DI IERI ALLORA L'UTENTE è UN FALSO POSITIVO (VUL DIRE CHE CI SONO ARRIVATE DELLE DATE REVOCHE ANOMALE DOVUTE A DEGLI ERRORI DELLA SCATOLETTA DEL TSP CHE NON DOBBIAMO CONSIDERARE) POICHè CAMMINA REGOLARMENTE SETTIAMO A NULL QUELLE DATA REVOCA CHE PRESENTANO QUESTA CONDIZIONE
 
     val windowSpec2 = Window.partitionBy("w2").orderBy(asc("data_revoca_movein"))
 
@@ -152,7 +148,7 @@ object Main {
       withColumn("km_tot_cumulati_1", lag("km_tot_cumulati", 1, null).over(windowSpec)).
       withColumn("data_revoca_movein",
 
-        when($"data_revoca_movein".isNotNull and datediff($"data_revoca_movein", $"data_revoca_movein_1") <= 90, null). //FORBICE TEMPORALE IN CUI POSSIAMO GI� TROVARE ED ESCLUDERE VARIE DATE REVOCA ANOMALE
+        when($"data_revoca_movein".isNotNull and datediff($"data_revoca_movein", $"data_revoca_movein_1") <= 90, null). //FORBICE TEMPORALE IN CUI POSSIAMO GIà TROVARE ED ESCLUDERE VARIE DATE REVOCA ANOMALE
           when($"data_revoca_movein".isNotNull and ($"km_tot_cumulati" > $"km_tot_cumulati_1"), null). //CONTROLLO PER EVITARE FALSI POSITIVI
 
           otherwise($"data_revoca_movein")).
@@ -224,7 +220,7 @@ object Main {
 
 
 
-    //JOINO I DUE DF PER OTTENERE I DETTAGLI DEI RINNOVI E REVOCHE DI OGNI UTENTE, METTO DATA REVOCA DA NULL A UN VALORE DI DEFAULT COS� DA POTER FARE IL JOIN CHE SEGUE GI� NELLA SEZIONE (V4) SENZA ERRORI
+    //JOINO I DUE DF PER OTTENERE I DETTAGLI DEI RINNOVI E REVOCHE DI OGNI UTENTE, METTO DATA REVOCA DA NULL A UN VALORE DI DEFAULT COSì DA POTER FARE IL JOIN CHE SEGUE GIù NELLA SEZIONE (V4) SENZA ERRORI
 
 
     val join_df_02 = join_df.join(df_storico_04_2, Seq("targa_hmac", "categoria_veicolo", "tipo_adesione", "alimentazione_veicolo", "classe_ambientale", "tsp"), "left").
@@ -246,7 +242,7 @@ object Main {
 
     val df_finale_storico = df_storico_pulito_02.
 
-      withColumn("data_attivazione_1", lead("data_attivazione", 1, null).over(windowSpec3) ).
+      withColumn("data_attivazione_1", lead("data_attivazione", 1, null).over(windowSpec3)).
 
       withColumn("giorni_diff",
 
